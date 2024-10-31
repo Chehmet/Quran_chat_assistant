@@ -3,7 +3,6 @@ from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
 from chromadb import Client as ChromaClient
 from chromadb.config import Settings
 
-# Initialize ChromaDB
 client = ChromaClient()
 collection = client.create_collection("faq_support")
 
