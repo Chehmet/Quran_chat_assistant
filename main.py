@@ -39,7 +39,6 @@ def retrieve_faq(question):
 
 
 def customer_support_chatbot(user_query):
-    # Retrieve FAQ-based answer
     retrieved_answer = retrieve_faq(user_query)
 
     # If a relevant FAQ answer exists, augment it with LLM for customization
