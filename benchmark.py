@@ -3,7 +3,8 @@ from fastapi.testclient import TestClient
 import APIfile
 
 # Assuming 'app' is the FastAPI app instance
-client = TestClient(APIfile)
+app = APIfile.app
+client = TestClient(app)
 
 class TestQuranAdvice(unittest.TestCase):
     
