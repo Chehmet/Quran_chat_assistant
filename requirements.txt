@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+haystack
+pydantic
+joblib
+streamlit
+requests
