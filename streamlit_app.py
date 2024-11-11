@@ -1,10 +1,8 @@
-# Install Streamlit
-# pip install streamlit
-
 import streamlit as st
 import requests
 
 st.title("Quran Advice App")
+st.write("Ask a question and get advice from the Quran Tafseer.")
 
 user_input = st.text_input("Ask for advice:")
 

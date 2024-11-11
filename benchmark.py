@@ -1,9 +1,9 @@
 import unittest
 from fastapi.testclient import TestClient
-import APIfile
+import api
 
 # Assuming 'app' is the FastAPI app instance
-app = APIfile.app
+app = api.app
 client = TestClient(app)
 
 class TestQuranAdvice(unittest.TestCase):
