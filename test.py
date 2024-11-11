@@ -1,14 +1,15 @@
 import joblib
 
+# Function to test the RAG pipeline
 def test_rag(question):
     # Load the saved pipeline
-    pipeline = joblib.load("rag_pipeline.pkl")
+    pipeline = joblib.load("rag_pipeline2.pkl")
     
     # Run the pipeline
     result = pipeline.run(
         query=question,
         params={
-            "Retriever": {"top_k": 5},
+            "BM25Retriever": {"top_k": 5},  # Adjust based on which retriever you want to test
             "Reader": {"top_k": 1}
         }
     )
@@ -43,7 +44,7 @@ def test_rag(question):
     return output
 
 # Example usage
-for i in range(5):
-    question = input()
+for _ in range(5):
+    question = input("Enter your question: ")
     result = test_rag(question)
     print(result)

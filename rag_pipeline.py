@@ -1,8 +1,9 @@
 from haystack.document_stores import InMemoryDocumentStore
-from haystack.nodes import DensePassageRetriever, FARMReader
-from haystack.pipelines import ExtractiveQAPipeline
+from haystack.nodes import DensePassageRetriever, FARMReader, BM25Retriever
+from haystack.pipelines import Pipeline
 from haystack.schema import Document
 import pandas as pd
+import joblib
 
 # Load processed data
 data = pd.read_csv('processed_quran_data.csv')
@@ -10,8 +11,8 @@ data = pd.read_csv('processed_quran_data.csv')
 # Ensure consistent quotation for all Tafseer entries
 data['Tafseer'] = data['Tafseer'].apply(lambda x: f'"{x}"' if not x.startswith('"') else x)
 
-# Initialize document store
-document_store = InMemoryDocumentStore()
+# Initialize document store with use_bm25=True
+document_store = InMemoryDocumentStore(use_bm25=True)
 
 # Write documents with formatted content for clarity
 documents = [
@@ -23,21 +24,26 @@ documents = [
 ]
 document_store.write_documents(documents)
 
-# Define and configure retriever
-retriever = DensePassageRetriever(
+# Initialize BM25 retriever
+bm25_retriever = BM25Retriever(document_store=document_store)
+
+# Initialize Dense Passage Retriever (DPR)
+dpr_retriever = DensePassageRetriever(
     document_store=document_store,
     query_embedding_model="facebook/dpr-question_encoder-single-nq-base",
-    passage_embedding_model="facebook/dpr-ctx_encoder-single-nq-base",
-    use_gpu=True
+    passage_embedding_model="facebook/dpr-ctx_encoder-single-nq-base"
 )
-document_store.update_embeddings(retriever)
+document_store.update_embeddings(dpr_retriever)
 
-# Define and configure reader with confidence threshold
-reader = FARMReader(model_name_or_path="deepset/roberta-base-squad2", use_gpu=True, top_k=1)
+# Initialize reader
+reader = FARMReader(model_name_or_path="deepset/roberta-base-squad2", top_k=1)
 
-# Load into pipeline
-pipeline = ExtractiveQAPipeline(reader, retriever)
+# Create pipeline and add components
+pipeline = Pipeline()
+pipeline.add_node(component=bm25_retriever, name="BM25Retriever", inputs=["Query"])
+pipeline.add_node(component=dpr_retriever, name="DPRRetriever", inputs=["BM25Retriever"])
+pipeline.add_node(component=reader, name="Reader", inputs=["DPRRetriever"])
 
 # Save pipeline for reuse
-import joblib
-joblib.dump(pipeline, "rag_pipeline.pkl")
+joblib.dump(pipeline, "rag_pipeline2.pkl")
+print("Pipeline saved successfully.")
