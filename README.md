@@ -59,3 +59,6 @@ To set up the project, follow these steps:
 - Add Hadiths, not just Quranic content.
 - Improve accuracy by refining responses, possibly through fine-tuning.
 - Add visualizations or an interactive UI to enhance usability for users.
+
+### Conract information:
+If you have any questions you can contact me via [telegram](https://t.me/Chehmet) or [email](valiullinac2004@gmail.com)
