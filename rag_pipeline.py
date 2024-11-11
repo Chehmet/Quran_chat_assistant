@@ -7,6 +7,9 @@ import pandas as pd
 # Load processed data
 data = pd.read_csv('processed_quran_data.csv')
 
+# Ensure consistent quotation for all Tafseer entries
+data['Tafseer'] = data['Tafseer'].apply(lambda x: f'"{x}"' if not x.startswith('"') else x)
+
 # Initialize document store
 document_store = InMemoryDocumentStore()
 
@@ -31,6 +34,7 @@ document_store.update_embeddings(retriever)
 
 # Define and configure reader with confidence threshold
 reader = FARMReader(model_name_or_path="deepset/roberta-base-squad2", use_gpu=True, top_k=1)
+
 # Load into pipeline
 pipeline = ExtractiveQAPipeline(reader, retriever)
 
