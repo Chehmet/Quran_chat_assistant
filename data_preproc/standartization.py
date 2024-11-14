@@ -3,8 +3,8 @@ import json
 import ast
 
 # Load the datasets
-dataset1 = pd.read_csv('processed_quran_data.csv')
-dataset2 = pd.read_csv('processed_quran_qa_data.csv')
+dataset1 = pd.read_csv('datasets/processed_quran_data.csv')
+dataset2 = pd.read_csv('datasets/processed_quran_qa_data.csv')
 
 # Parse `context_data` in dataset2, assuming it contains JSON-like structures
 dataset2['context_data'] = dataset2['context_data'].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)

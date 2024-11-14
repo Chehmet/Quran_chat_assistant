@@ -10,10 +10,11 @@ app = FastAPI()
 import joblib
 
 try:
-    pipeline = joblib.load("rag_pipeline.pkl")
+    pipeline = joblib.load("rag_pipeline_big_model.pkl")
     print("File loaded successfully.")
 except Exception as e:
     print(f"Failed to load file with joblib: {e}")
+    exit(0)
 
 
 class QueryRequest(BaseModel):
