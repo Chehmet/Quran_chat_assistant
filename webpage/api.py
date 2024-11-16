@@ -12,7 +12,7 @@ app = FastAPI()
 
 # Load the dataset
 try:
-    qa_dataset = pd.read_csv("D:/Study/Year 3/ATLLM/Final_project/ATLLM_chat_assistant/datasets/processed_quran_qa_data.csv")  # Adjust the path to your dataset
+    qa_dataset = pd.read_csv("processed_quran_qa_data.csv")  # Adjust the path to your dataset
     print("Dataset loaded successfully.")
 except Exception as e:
     print(f"Failed to load dataset: {e}")
@@ -20,7 +20,7 @@ except Exception as e:
 
 # Load the RAG pipeline
 try:
-    pipeline = joblib.load("D:/Study/Year 3/ATLLM/Final_project/rag_pipeline2.pkl")
+    pipeline = joblib.load("D:/Study/Year 3/ATLLM/Final_project/best_rag.pkl")
     print("Pipeline loaded successfully.")
 except Exception as e:
     print(f"Failed to load pipeline: {e}")
