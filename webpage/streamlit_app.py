@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # Set page title and layout
-st.set_page_config(page_title="Quran Answerer App", layout="centered")
+st.set_page_config(page_title="Quran Answerer", layout="centered")
 
 st.title("🌙 Quran Answerer App")
 st.subheader("Ask a question and get insights from the Quran Tafseer.")

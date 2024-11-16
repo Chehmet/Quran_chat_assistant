@@ -6,9 +6,17 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import gdown
 
 # FastAPI Setup
 app = FastAPI()
+
+# Function to download the .pkl file from Google Drive
+def download_model():
+    # Google Drive file ID from your link
+    file_id = "11jZu4D53kS6ny1ZhhwcX-HMa5HwxyDr2"
+    # Constructing the direct download URL
+    gdown.download(f"https://drive.google.com/uc?id={file_id}", "best_rag_pipeline.pkl", quiet=False)
 
 # Load the dataset
 try:
@@ -18,9 +26,10 @@ except Exception as e:
     print(f"Failed to load dataset: {e}")
     exit(0)
 
-# Load the RAG pipeline
+# Download and load the RAG pipeline model
 try:
-    pipeline = joblib.load("D:/Study/Year 3/ATLLM/Final_project/best_rag.pkl")
+    download_model()  # Download the model from Google Drive
+    pipeline = joblib.load("best_rag_pipeline.pkl")
     print("Pipeline loaded successfully.")
 except Exception as e:
     print(f"Failed to load pipeline: {e}")
@@ -68,8 +77,7 @@ def get_most_similar_question(query):
     else:
         # Fallback to the pipeline if no good match is found
         print("No sufficient match found, using the pipeline...", similarity_score)
-        # result = pipeline.run(query=query, params={"Retriever": {"top_k": 3}, "Reader": {"top_k": 1}}) #big pipe
-        result = pipeline.run(query=query, params={"Reader": {"top_k": 1}}) #pipe2
+        result = pipeline.run(query=query, params={"Reader": {"top_k": 1}})  # Use pipeline for answers
 
         # Extract the answer and context from the pipeline response
         answer = result["answers"][0] if result["answers"] else None
@@ -77,3 +85,9 @@ def get_most_similar_question(query):
         context = answer.context if answer else ""
     
     return {"advice": answer_en, "context": context}
+
+# Example usage:
+if __name__ == "__main__":
+    import uvicorn
+    
+    uvicorn.run(app, host="127.0.0.1", port=8000)
