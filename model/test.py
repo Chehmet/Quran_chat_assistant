@@ -1,52 +1,58 @@
-import joblib
+from rag_pipe_with_qa import * 
 
-# Function to test the RAG pipeline
-def test_rag(question, use_dpr=False):
-    # Load the correct pipeline based on `use_dpr`
-    pipeline_name = "rag_pipeline_dpr.pkl" if use_dpr else "rag_pipeline_bm25.pkl"
-    pipeline = joblib.load(pipeline_name)
+
+def test_rag(question):
+    # Load the optimized pipeline
+    pipeline = joblib.load("rag_pipeline_combined_optimized.pkl")
     
-    # Run the pipeline
+    # Check similarity
+    most_similar_idx, similarity_score = get_most_similar_question(question)
+    
+    # Run query with tuned parameters regardless of similarity score
     result = pipeline.run(
         query=question,
         params={
-            "Retriever": {"top_k": 5},  # Adjust based on the retriever you want to test
-            "Reader": {"top_k": 1}
+            "Retriever": {"top_k": 15},  # Retrieve more passages for better coverage
+            "Reader": {"top_k": 5}       # Increase reader top_k to find better answers
         }
     )
     
-    # Extract the answer and its metadata
+    # Extract the best answer with additional metadata
     if result['answers']:
-        answer = result['answers'][0].answer
-        confidence = result['answers'][0].score
-        context = result['answers'][0].context
-        surah = result['answers'][0].meta.get('surah', 'Unknown')
-        ayat = result['answers'][0].meta.get('ayat', 'Unknown')
+        best_answer = max(result['answers'], key=lambda x: x.score)  # Pick the highest confidence answer
         
-        # Prepare the output
+        answer = best_answer.answer.strip()  # Clean up whitespace from answer
+        confidence = best_answer.score
+        
+        context = best_answer.context.strip()  # Clean up whitespace from context
+        
+        source_type = best_answer.meta.get('type', 'Unknown')
+        surah = best_answer.meta.get('surah', 'Unknown') if source_type == 'tafseer' else None
+        ayat = best_answer.meta.get('ayat', 'Unknown') if source_type == 'tafseer' else None
+        
+        # Prepare output with source-specific information and improved readability
+        if source_type == 'tafseer':
+            explanation = f"In Surah **{surah}**, Ayat **{ayat}**, it is mentioned: _{context}_."
+        else:
+            explanation = f"The QA dataset provided this answer based on context: _{context}_."
+        
         output = {
             "question": question,
             "answer": answer,
-            "confidence": confidence,
-            "context": context,
-            "surah": surah,
-            "ayat": ayat
+            "confidence": round(confidence * 100, 2),  # Convert confidence to percentage for readability
+            "explanation": explanation,
+            "similarity_score": round(similarity_score * 100, 2)  # Show similarity score as a percentage too
         }
-    else:
-        output = {
-            "question": question,
-            "answer": "Sorry, I couldn't find an answer to your question.",
-            "confidence": None,
-            "context": None,
-            "surah": None,
-            "ayat": None
-        }
+        
+        return output
     
-    return output
+    else:
+        return {
+            "error": "No relevant answers found. Please try rephrasing your question."
+        }
 
-# Example usage
-for _ in range(5):
-    question = input("Enter your question: ")
-    use_dpr = input("Use DensePassageRetriever? (y/n): ").strip().lower() == "y"
-    result = test_rag(question, use_dpr)
-    print(result)
+# Example usage:
+if __name__ == "__main__":
+    question_input = input("Type your question: ")
+    response_output = test_rag(question_input)
+    print(response_output)

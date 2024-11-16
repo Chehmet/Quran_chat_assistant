@@ -43,7 +43,7 @@ document_store.write_documents(tafseer_documents + qa_documents)
 bm25_retriever = BM25Retriever(document_store=document_store)
 
 # Initialize a robust reader model
-reader = TransformersReader(model_name_or_path="deepset/roberta-large-squad2", top_k=3, max_seq_len=2048)
+reader = TransformersReader(model_name_or_path="deepset/roberta-large-squad2", top_k=5, max_seq_len=512)
 
 # Set up the pipeline with the BM25 retriever and the large reader model
 pipeline = ExtractiveQAPipeline(reader=reader, retriever=bm25_retriever)
@@ -56,7 +56,16 @@ print("Optimized pipeline saved successfully.")
 similarity_model = SentenceTransformer('all-MiniLM-L6-v2')
 
 def get_most_similar_question(query):
+    # Ensure all questions are strings and handle any non-string values
+    qa_dataset['question_en'] = qa_dataset['question_en'].astype(str)  # Convert all entries to string
+    
+    # Check for NaN values and replace them with an empty string if necessary
+    qa_dataset['question_en'] = qa_dataset['question_en'].fillna('')
+
+    # Encode questions
     question_embeddings = similarity_model.encode(qa_dataset['question_en'].tolist())
+    
+    # Encode the query
     query_embedding = similarity_model.encode([query])[0]
     
     similarities = cosine_similarity([query_embedding], question_embeddings)
@@ -64,48 +73,3 @@ def get_most_similar_question(query):
     similarity_score = similarities[0][most_similar_idx]
     
     return most_similar_idx, similarity_score
-
-# Function to test the RAG pipeline with improved answer extraction and metadata handling
-def test_rag(question):
-    # Check similarity and only process if the confidence is >= 90%
-    most_similar_idx, similarity_score = get_most_similar_question(question)
-    if similarity_score >= 0.9:
-        # Load the optimized pipeline
-        pipeline = joblib.load("rag_pipeline_combined_optimized.pkl")
-        
-        # Run query with tuned parameters
-        result = pipeline.run(
-            query=question,
-            params={
-                "Retriever": {"top_k": 15},  # Retrieve more passages for better coverage
-                "Reader": {"top_k": 5}       # Increase reader top_k to find better answers
-            }
-        )
-        
-        # Extract the best answer with additional metadata
-        if result['answers']:
-            best_answer = max(result['answers'], key=lambda x: x.score)  # Pick the highest confidence answer
-            answer = best_answer.answer
-            confidence = best_answer.score
-            context = best_answer.context
-            source_type = best_answer.meta.get('type', 'Unknown')
-            surah = best_answer.meta.get('surah', 'Unknown') if source_type == 'tafseer' else None
-            ayat = best_answer.meta.get('ayat', 'Unknown') if source_type == 'tafseer' else None
-            
-            # Prepare output with source-specific information
-            if source_type == 'tafseer':
-                explanation = f"In Surah {surah}, Ayat {ayat}, it is mentioned: {context}."
-            else:
-                explanation = f"The QA dataset provided the answer from context: {context}."
-            
-            output = {
-                "question": question,
-                "answer": answer,
-                "confidence": confidence,
-                "explanation": explanation
-            }
-            return output
-        else:
-            return {"error": "No relevant answers found."}
-    else:
-        return {"error": "Question not similar enough to the dataset."}
