@@ -27,7 +27,7 @@ st.write("### Your Question:")
 st.write(question)
 
 if st.button("Get answer"):
-    response = requests.post("http://127.0.0.1:8000/get_advice", json={"question": question})
+    response = requests.post("https://quran-chat-assistant.streamlit.app/get_advice", json={"question": question})
     if response.status_code == 200:
         data = response.json()
         if data['advice'] != "Your question is not similar enough to the available dataset.":
