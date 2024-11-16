@@ -28,6 +28,8 @@ st.write(question)
 
 if st.button("Get answer"):
     response = requests.post("https://quran-chat-assistant.streamlit.app/get_advice", json={"question": question})
+    print(response.status_code)
+    print(response.text)  
     if response.status_code == 200:
         data = response.json()
         if data['advice'] != "Your question is not similar enough to the available dataset.":
