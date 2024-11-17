@@ -1,41 +1,78 @@
 import streamlit as st
+import joblib
+import pandas as pd
 import requests
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import os
 
-# Set page title and layout
-st.set_page_config(page_title="Quran Answerer", layout="centered")
+# Load dataset and RAG model globally
+@st.cache_resource
+def load_resources():
+    # Load the dataset
+    try:
+        qa_dataset = pd.read_csv("processed_quran_qa_data.csv")  # Update with the correct path
+        st.write("Dataset loaded successfully.")
+    except Exception as e:
+        st.error(f"Failed to load dataset: {e}")
+        return None, None
 
+    # Load the RAG pipeline
+    try:
+        pipeline = joblib.load("best_rag_pipeline.pkl")  # Ensure the file is accessible
+        st.write("Pipeline loaded successfully.")
+    except Exception as e:
+        st.error(f"Failed to load pipeline: {e}")
+        return None, None
+
+    return qa_dataset, pipeline
+
+qa_dataset, pipeline = load_resources()
+
+# TF-IDF and similarity calculation function
+def get_most_similar_question(query, qa_dataset, pipeline):
+    if qa_dataset is None or pipeline is None:
+        return {"advice": "Resources not initialized correctly.", "context": ""}
+
+    # Ensure all questions are strings
+    qa_dataset['question_en'] = qa_dataset['question_en'].astype(str)
+
+    # Initialize TF-IDF vectorizer
+    vectorizer = TfidfVectorizer()
+    question_vectors = vectorizer.fit_transform(qa_dataset['question_en'])
+
+    # Transform the query
+    query_vector = vectorizer.transform([query])
+    similarities = cosine_similarity(query_vector, question_vectors)
+
+    # Get most similar question
+    most_similar_idx = similarities.argmax()
+    similarity_score = similarities[0, most_similar_idx]
+
+    if similarity_score >= 0.7:  # Threshold can be adjusted
+        answer_en = qa_dataset.iloc[most_similar_idx]['answer_en']
+        context = qa_dataset.iloc[most_similar_idx]['context']
+    else:
+        st.warning("No sufficient match found. Using pipeline...")
+        result = pipeline.run(query=query, params={"Reader": {"top_k": 1}})
+        answer = result["answers"][0] if result["answers"] else None
+        answer_en = answer.answer if answer else "No relevant answer found."
+        context = answer.context if answer else ""
+
+    return {"advice": answer_en, "context": context}
+
+# Streamlit UI
 st.title("🌙 Quran Answerer App")
 st.subheader("Ask a question and get insights from the Quran Tafseer.")
 
-# Sidebar for popular questions
-st.sidebar.title("Popular Questions")
-popular_questions = ["Can I eat pork?", "Who refused Allah's command to prostrate to Adam (peace be upon him)?",
-                      "Who raised the foundations of the Holy House (the Kaaba)?", "What is the significance of prayer in Islam?",
-                      "Who are the people not allowed to fast during the month of Ramadan?", 
-                      "What is the evidence for Allah (SWT) multiplying the reward for charity in His path to seven hundred times?",
-                      "What is the true religion in the sight of God?"]
-
-# User can select a popular question or enter their own
-selected_question = st.sidebar.radio("Choose a question:", popular_questions, index=0)
-custom_question = st.text_input("Or ask your own question here:")
-
-# Use the custom question if entered, otherwise use the selected popular question
-question = custom_question if custom_question else selected_question
-
-# Display the current question
-st.write("### Your Question:")
-st.write(question)
+question = st.text_input("Enter your question:")
 
 if st.button("Get answer"):
-    response = requests.post("http://127.0.0.1:8000/get_advice", json={"question": question})
-    if response.status_code == 200:
-        data = response.json()
-        if data['advice'] != "Your question is not similar enough to the available dataset.":
-            st.write("### Short answer:")
-            st.write(data['advice'])
-            st.write("### Context:")
-            st.write(data['context'])
-        else:
-            st.error("Question not similar enough to the dataset.")
+    if not question:
+        st.error("Please enter a question.")
     else:
-        st.error("Error fetching advice.")
+        response = get_most_similar_question(question, qa_dataset, pipeline)
+        st.write("### Short answer:")
+        st.write(response["advice"])
+        st.write("### Context:")
+        st.write(response["context"])
