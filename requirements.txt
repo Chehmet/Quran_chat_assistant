@@ -5,4 +5,4 @@ pydantic
 joblib
 streamlit
 requests
-sklearn
+scikit-learn
