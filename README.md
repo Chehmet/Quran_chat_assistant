@@ -2,7 +2,7 @@
 
 This project is a conversational assistant that uses the Quran for answers, built using the Haystack library, FAISS document storage, and Uvicorn for FastAPI service. The assistant leverages embeddings to provide relevant answers from indexed content in response to user queries.
 
-![](example/example1.png) <!-- Placeholder for image -->
+![](example/example_with_front.png) <!-- Placeholder for image -->
 
 ### Features
 
