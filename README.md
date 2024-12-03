@@ -13,7 +13,6 @@ This project is a conversational assistant that uses the Quran for answers, buil
 - **Questions and answers dataset**: [This dataset](https://huggingface.co/datasets/nazimali/quran-question-answer-context) contains 1224 questions with answers from Quran, so If your question is in this dataset, answer will be more accurate.
 - **Embedding-Based Search**: Uses embeddings to ensure contextually accurate responses to queries.
 - **Multiprocessing and FastAPI**: Utilizes Uvicorn’s multiprocessing and asynchronous capabilities to handle concurrent requests.
-- **Customizable Configuration**: Easily modify settings to tailor database and FAISS index paths.
 
 ### Installation
 
